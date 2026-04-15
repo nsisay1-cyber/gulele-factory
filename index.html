@@ -645,6 +645,18 @@ async function bootApp(){
 if(sessionStorage.getItem('gf_auth')==='1'){
   bootApp();
 }
+  function tryLogin() {
+  const passwordInput = document.getElementById('pw-input').value;
+  const errorBox = document.getElementById('login-error');
+
+  if (passwordInput === APP_PASSWORD) {
+    sessionStorage.setItem('gf_auth', '1');
+    bootApp();
+  } else {
+    errorBox.style.display = 'block';
+  }
+}
+
 </script>
 </body>
 </html>
