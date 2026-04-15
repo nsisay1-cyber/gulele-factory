@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gulele Factory</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Arial,sans-serif;background:#f0f0f0;color:#111;font-size:14px}
+input,select,button,textarea{font-family:inherit;font-size:13px}
+input,select{width:100%;padding:8px 12px;border-radius:7px;border:1px solid #ccc;background:#fff;color:#111;outline:none}
+input:focus,select:focus{border-color:#378ADD}
+button{cursor:pointer}
+.app{min-height:100vh;background:#f0f0f0}
+.header{background:#fff;border-bottom:1px solid #e0e0e0;padding:0 24px;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100}
+.logo{display:flex;align-items:center;gap:10px}
+.logo-icon{width:30px;height:30px;border-radius:7px;background:#378ADD;color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700}
+.logo-name{font-size:15px;font-weight:600}
+.logo-sub{font-size:10px;color:#888}
+.nav{background:#fff;border-bottom:1px solid #e0e0e0;display:flex;padding:0 24px;overflow-x:auto}
+.nav-btn{padding:11px 18px;border:none;border-bottom:2px solid transparent;background:transparent;color:#888;font-size:13px;font-weight:500;white-space:nowrap;cursor:pointer}
+.nav-btn.active{color:#378ADD;border-bottom-color:#378ADD;font-weight:600}
+.body{display:flex;max-width:1400px;margin:0 auto}
+.main{flex:1;min-width:0;padding:24px}
+.ai-panel{width:320px;flex-shrink:0;background:#fff;border-left:1px solid #e0e0e0;height:calc(100vh - 96px);position:sticky;top:96px;display:flex;flex-direction:column}
+.card{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:18px 20px;margin-bottom:16px}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px}
+.kpi{background:#f5f5f5;border-radius:8px;padding:14px 16px}
+.kpi-label{font-size:11px;color:#888;margin-bottom:5px}
+.kpi-val{font-size:20px;font-weight:600}
+.kpi-sub{font-size:10px;color:#aaa;margin-top:3px}
+.sec-label{font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:block}
+.badge{font-size:10px;padding:3px 9px;border-radius:20px;font-weight:600;display:inline-block}
+.badge-paid{background:#EAF3DE;color:#27500A}
+.badge-partial{background:#FAEEDA;color:#633806}
+.badge-unpaid{background:#FCEBEB;color:#791F1F}
+.badge-blue{background:#E6F1FB;color:#0C447C}
+.badge-production{background:#EAF3DE;color:#27500A}
+.badge-transfer{background:#E6F1FB;color:#0C447C}
+.badge-dispatch{background:#FAEEDA;color:#633806}
+.btn-primary{padding:9px 20px;border-radius:7px;background:#378ADD;color:#fff;border:none;font-weight:600}
+.btn-primary:hover{background:#2a6fb5}
+.btn-secondary{padding:6px 14px;border-radius:6px;background:#f5f5f5;color:#555;border:1px solid #ddd;font-weight:500}
+.btn-secondary:hover{background:#e8e8e8}
+.btn-sm{padding:5px 12px;border-radius:6px;background:#f5f5f5;color:#555;border:1px solid #ddd;font-size:11px}
+.btn-active{color:#378ADD!important;border-color:#378ADD!important}
+.btn-green{background:#3B6D11;color:#fff;border:none;border-radius:7px;padding:9px 20px;font-weight:600}
+.btn-green:hover{background:#2d5209}
+.row{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0}
+.row:last-child{border-bottom:none}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.three-col{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.four-col{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+.form-label{font-size:11px;color:#888;margin-bottom:4px;display:block}
+.tbl{width:100%;border-collapse:collapse;font-size:13px}
+.tbl th{padding:8px 10px;text-align:left;font-size:10px;color:#888;font-weight:700;text-transform:uppercase;letter-spacing:.4px;border-bottom:1px solid #e0e0e0}
+.tbl td{padding:10px 10px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+.tbl tr:last-child td{border-bottom:none}
+.tbl tr:hover td{background:#fafafa}
+.report-tbl{width:100%;border-collapse:collapse;font-size:12px}
+.report-tbl th{padding:7px 10px;text-align:right;font-size:10px;color:#fff;font-weight:600;background:#2E5FA3;white-space:nowrap}
+.report-tbl th:first-child{text-align:left}
+.report-tbl td{padding:7px 10px;border-bottom:1px solid #f0f0f0;text-align:right}
+.report-tbl td:first-child{text-align:left;font-weight:500;color:#333}
+.report-tbl tr:nth-child(even) td{background:#f9f9f9}
+.report-tbl tr.total-row td{background:#1F3864;color:#fff;font-weight:700;border-top:2px solid #1F3864}
+.info-box{background:#E6F1FB;border:1px solid #B5D4F4;border-radius:8px;padding:12px 14px;margin-bottom:14px}
+.info-box strong{font-size:12px;color:#0C447C;display:block;margin-bottom:3px}
+.info-box p{font-size:11px;color:#185FA5;line-height:1.7}
+.warning-box{background:#FAEEDA;border:1px solid #FAC775;border-radius:8px;padding:12px 14px;margin-bottom:14px}
+.warning-box strong{font-size:12px;color:#633806;display:block;margin-bottom:3px}
+.warning-box p{font-size:11px;color:#854F0B;line-height:1.7}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1F3864;color:#fff;padding:10px 22px;border-radius:8px;font-size:13px;z-index:9999;pointer-events:none;transition:opacity .3s}
+.av{border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0}
+.prog-wrap{height:5px;border-radius:3px;background:#e8e8e8;overflow:hidden;margin-top:6px}
+.prog-fill{height:100%;border-radius:3px}
+.bar-chart-wrap{overflow:hidden}
+.chat-messages{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.chat-bubble{max-width:88%;padding:9px 13px;border-radius:10px;font-size:12px;line-height:1.65}
+.chat-user{background:#378ADD;color:#fff;align-self:flex-end}
+.chat-bot{background:#f0f0f0;color:#111;align-self:flex-start}
+.chat-input-row{padding:12px;border-top:1px solid #e0e0e0;display:flex;gap:8px}
+.section-header{margin-bottom:20px}
+.section-header h2{font-size:20px;font-weight:600;margin-bottom:4px}
+.section-header p{font-size:13px;color:#888}
+.flex-between{display:flex;justify-content:space-between;align-items:center}
+.flex-gap{display:flex;gap:8px;align-items:center}
+.ovx{overflow-x:auto}
+.mt8{margin-top:8px}
+.mb16{margin-bottom:16px}
+.mb8{margin-bottom:8px}
+.color-red{color:#A32D2D}
+.color-green{color:#3B6D11}
+.color-blue{color:#378ADD}
+.fw6{font-weight:600}
+.fs12{font-size:12px}
+.fs11{font-size:11px}
+.text-muted{color:#888}
+.search-row{display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:center}
+.search-row input{max-width:260px}
+.move-type-btn{padding:8px 16px;border-radius:7px;border:1px solid #ddd;background:#f5f5f5;color:#555;font-weight:500;cursor:pointer;font-size:12px}
+.move-type-btn.sel-prod{background:#EAF3DE;color:#27500A;border-color:#639922}
+.move-type-btn.sel-trans{background:#E6F1FB;color:#0C447C;border-color:#378ADD}
+.move-type-btn.sel-disp{background:#FAEEDA;color:#633806;border-color:#EF9F27}
+.stock-flow{display:grid;grid-template-columns:1fr 60px 1fr 60px 1fr;gap:0;align-items:center;margin-bottom:20px}
+.flow-box{background:#fff;border:1px solid #e0e0e0;border-radius:10px;padding:14px;text-align:center}
+.flow-arrow{text-align:center;font-size:22px;color:#888}
+.flow-label{font-size:11px;color:#888;margin-bottom:4px}
+.flow-val{font-size:22px;font-weight:700;color:#111}
+.flow-sub{font-size:10px;color:#aaa;margin-top:2px}
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;background:#f0f0f0}
+.login-card{background:#fff;border:1px solid #e0e0e0;border-radius:12px;padding:40px;width:100%;max-width:360px;text-align:center}
+.login-icon{width:52px;height:52px;border-radius:12px;background:#378ADD;color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:700;margin:0 auto 16px}
+.login-title{font-size:20px;font-weight:600;margin-bottom:6px}
+.login-sub{font-size:13px;color:#888;margin-bottom:24px}
+.login-error{background:#FCEBEB;color:#791F1F;font-size:12px;padding:8px 12px;border-radius:6px;margin-bottom:14px}
+.sync-indicator{font-size:11px;color:#888;display:flex;align-items:center;gap:5px}
+.sync-dot{width:7px;height:7px;border-radius:50%;background:#1D9E75}
+.sync-dot.syncing{background:#EF9F27;animation:pulse 1s infinite}
+.sync-dot.error{background:#E24B4A}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@media print{.header,.nav,.ai-panel,.no-print{display:none!important}.main{padding:0}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="login-screen">
+  <div class="login-card">
+    <div class="login-icon">G</div>
+    <div class="login-title">Gulele Factory</div>
+    <div class="login-sub">Enter the access password to continue</div>
+    <div class="login-error" id="login-error" style="display:none">Incorrect password. Please try again.</div>
+    <div style="text-align:left;margin-bottom:8px">
+      <label class="form-label" for="pw-input">Password</label>
+      <input type="password" id="pw-input" placeholder="Enter password" onkeydown="if(event.key==='Enter')tryLogin()" style="margin-bottom:14px">
+    </div>
+    <button class="btn-primary" style="width:100%" onclick="tryLogin()">Sign in</button>
+  </div>
+</div>
+
+<!-- MAIN APP — id must be "main-app" -->
+<div class="app" id="main-app" style="display:none">
+  <div class="header">
+    <div class="logo">
+      <div class="logo-icon">G</div>
+      <div>
+        <div class="logo-name">Gulele Factory</div>
+        <div class="logo-sub">Management System</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="sync-indicator"><div class="sync-dot" id="sync-dot"></div><span id="sync-label">Connected</span></div>
+      <button class="btn-secondary" id="ai-toggle" onclick="toggleAI()">✦ AI Assistant</button>
+      <button class="btn-sm" onclick="doLogout()">Sign out</button>
+    </div>
+  </div>
+  <div class="nav" id="nav"></div>
+  <div class="body">
+    <div class="main" id="main"></div>
+    <div class="ai-panel" id="ai-panel" style="display:none"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" style="opacity:0"></div>
+
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+// IMPORTANT: Replace the three values below with your own before uploading
+const SUPABASE_URL  = 'https://bsoqxedrmtzfqzfnztys.supabase.co
+';
+const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJzb3F4ZWRybXR6ZnF6Zm56dHlzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYxNzA4ODcsImV4cCI6MjA5MTc0Njg4N30.45n-I1U_pbzixIMrDbxW8smnLxKq9aW5aDGoqzO5eFo
+';
+const APP_PASSWORD  = 'Guleleplastic20126';
+// ─────────────────────────────────────────────────────────────────────────────
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+
+// ── AUTH — single function, correct div id, proper show/hide ──────────────────
+function tryLogin() {
+  const entered = document.getElementById('pw-input').value;
+  if (entered === APP_PASSWORD) {
+    sessionStorage.setItem('gf_auth', '1');
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';   // FIX: was 'app'
+    bootApp();
+  } else {
+    document.getElementById('login-error').style.display = 'block';
+    document.getElementById('pw-input').value = '';
+    document.getElementById('pw-input').focus();
+  }
+}
+
+function doLogout() {
+  sessionStorage.removeItem('gf_auth');
+  location.reload();
+}
+
+// Auto-restore session if already logged in (page refresh)
+if (sessionStorage.getItem('gf_auth') === '1') {
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('main-app').style.display = 'block';
+}
+
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const COLORS  = ["#378ADD","#1D9E75","#EF9F27","#D85A30","#7F77DD","#E24B4A","#639922","#D4537E"];
+const EXP_CATS = ["Raw Materials","Maintenance","Logistics","Overheads"];
+const ETB  = n => "ETB " + new Intl.NumberFormat("en").format(Math.round(n));
+const fmt  = n => new Intl.NumberFormat("en").format(Math.round(n));
+const today = () => new Date().toISOString().slice(0,10);
+const badge = s => `<span class="badge badge-${s.toLowerCase()}">${s}</span>`;
+const avColors = [{bg:"#B5D4F4",tc:"#0C447C"},{bg:"#9FE1CB",tc:"#085041"},{bg:"#F5C4B3",tc:"#712B13"},{bg:"#C0DD97",tc:"#27500A"},{bg:"#CECBF6",tc:"#3C3489"},{bg:"#FAC775",tc:"#633806"}];
+const initials = (name,size=36,bg="#B5D4F4",tc="#0C447C") =>
+  `<div class="av" style="width:${size}px;height:${size}px;background:${bg};color:${tc};font-size:${Math.floor(size*.33)}px">${name.split(" ").map(w=>w[0]).slice(0,2).join("")}</div>`;
+
+let toastTimer;
+function showToast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.opacity=1;clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.style.opacity=0,2500);}
+
+function setSyncing(state){
+  const dot=document.getElementById('sync-dot');
+  const lbl=document.getElementById('sync-label');
+  if(!dot)return;
+  dot.className='sync-dot'+(state==='syncing'?' syncing':state==='error'?' error':'');
+  lbl.textContent=state==='syncing'?'Saving…':state==='error'?'Offline':'Connected';
+}
+
+// ── IN-MEMORY CACHE ───────────────────────────────────────────────────────────
+let DB = {products:[],clients:[],orders:[],orderLines:[],movements:[],expenses:[]};
+
+async function loadAll(){
+  setSyncing('syncing');
+  try{
+    const [p,c,o,ol,m,e] = await Promise.all([
+      sb.from('products').select('*').order('product_id'),
+      sb.from('clients').select('*').order('client_id'),
+      sb.from('orders').select('*').order('date',{ascending:false}),
+      sb.from('order_lines').select('*'),
+      sb.from('inventory_movements').select('*').order('date',{ascending:false}),
+      sb.from('expenses').select('*').order('date',{ascending:false}),
+    ]);
+    DB.products   = p.data  || [];
+    DB.clients    = c.data  || [];
+    DB.orders     = o.data  || [];
+    DB.orderLines = ol.data || [];
+    DB.movements  = m.data  || [];
+    DB.expenses   = e.data  || [];
+    setSyncing('ok');
+  } catch(err){
+    setSyncing('error');
+    showToast('Could not connect to database');
+    console.error(err);
+  }
+}
+
+// ── STOCK CALCULATOR ──────────────────────────────────────────────────────────
+function calcStock(){
+  const stock={};
+  DB.products.forEach(p=>{stock[p.product_id]={main:0,sales:0};});
+  DB.movements.forEach(m=>{
+    if(!stock[m.product_id])stock[m.product_id]={main:0,sales:0};
+    if(m.type==='Production')  stock[m.product_id].main+=m.qty;
+    else if(m.type==='Transfer'){stock[m.product_id].main-=m.qty;stock[m.product_id].sales+=m.qty;}
+    else if(m.type==='Dispatch') stock[m.product_id].sales-=m.qty;
+  });
+  return stock;
+}
+
+// ── ID GENERATOR ──────────────────────────────────────────────────────────────
+const nextId = (prefix,arr,field) => {
+  const nums = arr.map(r=>{const m=r[field]?.match(/\d+$/);return m?parseInt(m[0]):0;});
+  return prefix + String(Math.max(0,...nums)+1).padStart(3,'0');
+};
+
+// ── SVG CHARTS ────────────────────────────────────────────────────────────────
+function barChart(data,keyX,keyY,color,h=160){
+  const W=520,H=h,pad={t:10,r:10,b:28,l:48};
+  const vals=data.map(d=>d[keyY]);const maxV=Math.max(...vals,1);
+  const gap=(W-pad.l-pad.r)/data.length;const bw=Math.max(4,Math.floor(gap*0.6));
+  const ff=v=>v>=1e6?(v/1e6).toFixed(1)+"M":v>=1000?(v/1000).toFixed(0)+"K":v;
+  let bars=data.map((d,i)=>{
+    const bh=Math.max(2,Math.round(((d[keyY]||0)/maxV)*(H-pad.t-pad.b)));
+    const x=pad.l+i*gap+gap/2-bw/2;
+    return `<rect x="${x}" y="${H-pad.b-bh}" width="${bw}" height="${bh}" rx="3" fill="${color}"/>
+            <text x="${x+bw/2}" y="${H-pad.b+14}" text-anchor="middle" font-size="9" fill="#888">${d[keyX]}</text>`;
+  }).join('');
+  let yL='';
+  for(let i=0;i<=4;i++){const v=Math.round(maxV*(i/4));const y=H-pad.b-Math.round((v/maxV)*(H-pad.t-pad.b));yL+=`<text x="${pad.l-5}" y="${y+3}" text-anchor="end" font-size="9" fill="#aaa">${ff(v)}</text><line x1="${pad.l}" y1="${y}" x2="${W-pad.r}" y2="${y}" stroke="#f0f0f0" stroke-width="1"/>`;}
+  return `<div class="bar-chart-wrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${h}px">${yL}${bars}</svg></div>`;
+}
+function hBarChart(data,keyLabel,keyVal,h=180){
+  const W=520,H=h,pad={t:5,r:80,b:5,l:90};const maxV=Math.max(...data.map(d=>d[keyVal]),1);
+  const rowH=Math.floor((H-pad.t-pad.b)/Math.max(data.length,1));
+  let rows=data.map((d,i)=>{
+    const bw=Math.round((d[keyVal]/maxV)*(W-pad.l-pad.r));
+    const y=pad.t+i*rowH+rowH/2-7;
+    const lbl=d[keyLabel].length>11?d[keyLabel].substring(0,11)+'…':d[keyLabel];
+    return `<text x="${pad.l-5}" y="${y+11}" text-anchor="end" font-size="10" fill="#666">${lbl}</text>
+            <rect x="${pad.l}" y="${y}" width="${Math.max(2,bw)}" height="14" rx="3" fill="${COLORS[i%COLORS.length]}"/>
+            <text x="${pad.l+bw+5}" y="${y+11}" font-size="9" fill="#888">${d[keyVal]>=1000?(d[keyVal]/1000).toFixed(0)+'K':d[keyVal]}</text>`;
+  }).join('');
+  return `<div class="bar-chart-wrap"><svg viewBox="0 0 ${W} ${H}" style="width:100%;height:${h}px">${rows}</svg></div>`;
+}
+function donutChart(data,size=120){
+  const r=40,cx=size/2,cy=size/2;const total=data.reduce((s,d)=>s+d.value,0)||1;let offset=0;
+  const paths=data.map(d=>{
+    const pct=d.value/total;const angle=pct*Math.PI*2;
+    const x1=cx+r*Math.sin(offset),y1=cy-r*Math.cos(offset);offset+=angle;
+    const x2=cx+r*Math.sin(offset),y2=cy-r*Math.cos(offset);
+    if(pct>=.999)return`<circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="${d.color}" stroke-width="18"/>`;
+    return`<path d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${pct>.5?1:0} 1 ${x2},${y2} Z" fill="${d.color}"/>`;
+  }).join('');
+  return `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}"><circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#eee" stroke-width="18"/>${paths}<circle cx="${cx}" cy="${cy}" r="${r-18}" fill="white"/></svg>`;
+}
+
+// ── ROUTING ───────────────────────────────────────────────────────────────────
+let currentView = 'dashboard';
+const TABS = ['dashboard','sales','inventory','expenses','products','clients','sales report'];
+
+function renderNav(){
+  document.getElementById('nav').innerHTML = TABS.map(t =>
+    `<button class="nav-btn${t===currentView?' active':''}" onclick="navigate('${t}')">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`
+  ).join('');
+}
+function navigate(v){ currentView=v; renderNav(); renderMain(); }
+function renderMain(){ const el=document.getElementById('main'); if(el) el.innerHTML=views[currentView](); }
+
+// ── VIEWS OBJECT — declared with const to avoid SyntaxError ──────────────────
+const views = {};
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+views.dashboard = () => {
+  const {orders,orderLines,expenses} = DB;
+  const totalRev  = orders.reduce((s,o)=>s+parseFloat(o.order_total||0),0);
+  const totalPaid = orders.reduce((s,o)=>s+parseFloat(o.amt_paid||0),0);
+  const totalBal  = orders.reduce((s,o)=>s+parseFloat(o.balance_due||0),0);
+  const totalExp  = expenses.reduce((s,x)=>s+parseFloat(x.amount||0),0);
+  const profit    = totalPaid - totalExp;
+  const monthlyRev = MONTHS.map((m,i)=>({month:m,revenue:orders.filter(o=>new Date(o.date).getMonth()===i).reduce((s,o)=>s+parseFloat(o.order_total||0),0)}));
+  const productRev = {};
+  orderLines.forEach(l=>{productRev[l.product_name]=(productRev[l.product_name]||0)+parseFloat(l.line_total||0);});
+  const topProds = Object.entries(productRev).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([name,rev])=>({name:name.replace(' Container','').replace('Liter ','L '),rev}));
+  const expByCat = EXP_CATS.map((cat,i)=>({name:cat,value:expenses.filter(x=>x.category===cat).reduce((s,x)=>s+parseFloat(x.amount||0),0),color:COLORS[i]})).filter(x=>x.value>0);
+  const recent   = orders.slice(0,5);
+  return `<div class="section-header"><h2>Dashboard</h2><p>${orders.length} orders · All-time summary</p></div>
+  <div class="kpi-grid">${[{l:'Total revenue',v:ETB(totalRev),s:'all invoiced'},{l:'Total collected',v:ETB(totalPaid),s:'payments received'},{l:'Outstanding',v:ETB(totalBal),s:'owed by clients',warn:totalBal>0},{l:'Net profit',v:ETB(profit),s:'collected − expenses',pos:profit>0}].map(k=>`<div class="kpi"><div class="kpi-label">${k.l}</div><div class="kpi-val" style="color:${k.warn?'#A32D2D':k.pos?'#3B6D11':'#111'}">${k.v}</div><div class="kpi-sub">${k.s}</div></div>`).join('')}</div>
+  <div class="two-col">
+    <div class="card"><span class="sec-label">Monthly revenue (ETB)</span>${barChart(monthlyRev,'month','revenue','#378ADD')}</div>
+    <div class="card"><span class="sec-label">Top products by revenue</span>${topProds.length?hBarChart(topProds,'name','rev'):'<p class="text-muted fs12" style="padding:20px 0">No sales recorded yet.</p>'}</div>
+  </div>
+  <div class="two-col">
+    <div class="card"><span class="sec-label">Expense breakdown</span>${expByCat.length?`<div style="display:flex;align-items:center;gap:16px">${donutChart(expByCat)}<div style="flex:1">${expByCat.map(x=>`<div style="display:flex;align-items:center;gap:7px;margin-bottom:9px"><div style="width:9px;height:9px;border-radius:50%;background:${x.color};flex-shrink:0"></div><div style="flex:1;font-size:12px;color:#888">${x.name}</div><strong style="font-size:12px">${ETB(x.value)}</strong></div>`).join('')}</div></div>`:'<p class="text-muted fs12" style="padding:20px 0">No expenses recorded yet.</p>'}</div>
+    <div class="card"><div class="flex-between mb16"><span class="sec-label" style="margin:0">Recent orders</span><button class="btn-sm" onclick="navigate('sales')">View all</button></div>${recent.map(o=>`<div class="row"><div><div class="fw6 fs12">${o.client_name}</div><div class="fs11 text-muted">${o.order_id} · ${o.date}</div></div><div style="display:flex;align-items:center;gap:8px"><strong class="fs12">${ETB(o.order_total)}</strong>${badge(o.status)}</div></div>`).join('')}</div>
+  </div>`;
+};
+
+// ── SALES ─────────────────────────────────────────────────────────────────────
+let salesTab='list',salesSearch='',salesFilter='All',orderLines_form=[{productId:'',qty:1,unitPrice:0,lineTotal:0}],orderClient='',orderDate=today(),orderAmtPaid='';
+function calcOrderTotal(){ return orderLines_form.reduce((s,l)=>s+(l.lineTotal||0),0); }
+function calcBalanceDue(){ return Math.max(0,calcOrderTotal()-(parseFloat(orderAmtPaid)||0)); }
+
+views.sales = () => {
+  const {orders,clients,products} = DB;
+  const outstanding = orders.reduce((s,o)=>s+parseFloat(o.balance_due||0),0);
+  const filtered = orders.filter(o=>(!salesSearch||o.client_name.toLowerCase().includes(salesSearch.toLowerCase())||o.order_id.toLowerCase().includes(salesSearch.toLowerCase()))&&(salesFilter==='All'||o.status===salesFilter));
+  let html = `<div class="flex-between mb16"><div class="section-header" style="margin:0"><h2>Sales Orders</h2><p>${orders.length} orders · Outstanding: <strong class="color-red">${ETB(outstanding)}</strong></p></div><div class="flex-gap"><button class="btn-secondary${salesTab==='list'?' btn-active':''}" onclick="setSalesTab('list')">Order list</button><button class="btn-primary" onclick="setSalesTab('new')">+ New order</button></div></div>`;
+  if(salesTab==='new'){
+    const ot=calcOrderTotal(),bd=calcBalanceDue();
+    html+=`<div class="card"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px">New sales order</h3>
+    <div class="two-col mb16">
+      <div><label class="form-label">Client</label><select onchange="orderClient=this.value"><option value="">Select client...</option>${clients.map(c=>`<option value="${c.client_id}"${orderClient===c.client_id?' selected':''}>${c.name} (${c.client_id})</option>`).join('')}</select></div>
+      <div><label class="form-label">Date</label><input type="date" value="${orderDate}" onchange="orderDate=this.value"></div>
+    </div>
+    <span class="sec-label">Order lines</span>
+    <div style="background:#f5f5f5;border-radius:8px;padding:12px;margin-bottom:12px">
+      <div style="display:grid;grid-template-columns:2fr 80px 120px 120px 30px;gap:8px;margin-bottom:8px;font-size:10px;color:#888;font-weight:700;text-transform:uppercase"><div>Product</div><div>Qty</div><div>Unit price</div><div>Line total</div><div></div></div>
+      ${orderLines_form.map((l,i)=>`<div style="display:grid;grid-template-columns:2fr 80px 120px 120px 30px;gap:8px;margin-bottom:8px;align-items:center">
+        <select onchange="updateOrderLine(${i},'productId',this.value)"><option value="">Select...</option>${products.map(p=>`<option value="${p.product_id}"${l.productId===p.product_id?' selected':''}>${p.name}</option>`).join('')}</select>
+        <input type="number" min="1" value="${l.qty}" onchange="updateOrderLine(${i},'qty',this.value)">
+        <div style="padding:8px 0;font-size:13px;color:#888">${l.unitPrice?ETB(l.unitPrice):'—'}</div>
+        <div style="padding:8px 0;font-size:13px;font-weight:600">${l.lineTotal?ETB(l.lineTotal):'—'}</div>
+        <button class="btn-sm" onclick="removeOrderLine(${i})" style="padding:4px 8px">✕</button>
+      </div>`).join('')}
+      <button class="btn-sm mt8" onclick="addOrderLine()">+ Add product</button>
+    </div>
+    <div style="text-align:right;margin-bottom:12px;font-size:13px;color:#888">Order total: <strong style="font-size:16px;color:#111">${ETB(ot)}</strong></div>
+    <div class="two-col mb16">
+      <div><label class="form-label">Amount paid now (ETB)</label><input type="number" min="0" placeholder="0" value="${orderAmtPaid}" onchange="orderAmtPaid=this.value;renderMain()"></div>
+      <div style="background:#f5f5f5;border-radius:8px;padding:10px 14px"><div class="form-label">Balance due</div><strong style="font-size:18px;color:${bd>0?'#A32D2D':'#3B6D11'}">${ETB(bd)}</strong></div>
+    </div>
+    <div class="info-box"><strong>🔒 Price protection</strong><p>Unit prices are locked at today's rates and saved to the database. Changing catalog prices later will NOT affect this order.</p></div>
+    <div class="flex-gap"><button class="btn-primary" onclick="submitOrder()">Save order</button><button class="btn-secondary" onclick="setSalesTab('list')">Cancel</button></div></div>`;
+  } else {
+    html+=`<div class="search-row"><input placeholder="Search orders..." value="${salesSearch}" oninput="salesSearch=this.value;renderMain()">${['All','Paid','Partial','Unpaid'].map(s=>`<button class="btn-sm${salesFilter===s?' btn-active':''}" onclick="salesFilter='${s}';renderMain()">${s}</button>`).join('')}</div>
+    <div class="card ovx"><table class="tbl"><thead><tr><th>Order</th><th>Date</th><th>Client</th><th>Total</th><th>Paid</th><th>Balance</th><th>Status</th></tr></thead><tbody>
+    ${filtered.map(o=>`<tr><td class="fw6 color-blue fs12">${o.order_id}</td><td class="text-muted fs12">${o.date}</td><td class="fs12">${o.client_name}</td><td class="fw6 fs12">${ETB(o.order_total)}</td><td class="fs12 color-green">${ETB(o.amt_paid)}</td><td class="fs12 fw6" style="color:${parseFloat(o.balance_due)>0?'#A32D2D':'#3B6D11'}">${ETB(o.balance_due)}</td><td>${badge(o.status)}</td></tr>`).join('')}
+    ${filtered.length===0?`<tr><td colspan="7" style="text-align:center;padding:24px;color:#888">No orders yet.</td></tr>`:''}
+    </tbody></table></div>`;
+  }
+  return html;
+};
+
+function setSalesTab(t){salesTab=t;if(t==='new'){orderLines_form=[{productId:'',qty:1,unitPrice:0,lineTotal:0}];orderClient='';orderDate=today();orderAmtPaid='';}renderMain();}
+function updateOrderLine(i,field,val){
+  if(field==='productId'){const p=DB.products.find(p=>p.product_id===val);if(p){orderLines_form[i].productId=val;orderLines_form[i].productName=p.name;orderLines_form[i].unitPrice=p.price;}else{orderLines_form[i].productId='';orderLines_form[i].unitPrice=0;}}
+  else if(field==='qty'){orderLines_form[i].qty=parseInt(val)||0;}
+  orderLines_form[i].lineTotal=(orderLines_form[i].qty||0)*(orderLines_form[i].unitPrice||0);
+  renderMain();
+}
+function addOrderLine(){orderLines_form.push({productId:'',qty:1,unitPrice:0,lineTotal:0});renderMain();}
+function removeOrderLine(i){if(orderLines_form.length>1){orderLines_form.splice(i,1);renderMain();}}
+
+async function submitOrder(){
+  if(!orderClient)return showToast('Select a client');
+  if(orderLines_form.some(l=>!l.productId||!l.qty))return showToast('Fill in all product lines');
+  const client=DB.clients.find(c=>c.client_id===orderClient);
+  const newOrderId=nextId('O',DB.orders,'order_id');
+  const paid=parseFloat(orderAmtPaid)||0,ot=calcOrderTotal();
+  const status=paid>=ot?'Paid':paid>0?'Partial':'Unpaid';
+  setSyncing('syncing');
+  const{error:oErr}=await sb.from('orders').insert({order_id:newOrderId,date:orderDate,client_id:orderClient,client_name:client.name,order_total:ot,amt_paid:paid,balance_due:Math.max(0,ot-paid),status});
+  if(oErr){setSyncing('error');return showToast('Error saving order: '+oErr.message);}
+  const lines=orderLines_form.filter(l=>l.productId).map(l=>({order_id:newOrderId,product_id:l.productId,product_name:l.productName,qty:l.qty,unit_price:l.unitPrice,line_total:l.lineTotal}));
+  const{error:lErr}=await sb.from('order_lines').insert(lines);
+  if(lErr){setSyncing('error');return showToast('Error saving order lines: '+lErr.message);}
+  showToast('Order '+newOrderId+' saved!');
+  await loadAll();setSalesTab('list');
+}
+
+// ── INVENTORY ─────────────────────────────────────────────────────────────────
+let invTab='stock',moveType='Production',moveProdId='',moveQty='',moveShift='1',moveNote='',moveDate=today(),invSearch='';
+
+views.inventory = () => {
+  const stock=calcStock();const{products,movements}=DB;
+  const totalMain=products.reduce((s,p)=>s+(stock[p.product_id]?stock[p.product_id].main:0),0);
+  const totalSales=products.reduce((s,p)=>s+(stock[p.product_id]?stock[p.product_id].sales:0),0);
+  const lowCt=products.filter(p=>stock[p.product_id]&&stock[p.product_id].main<50).length;
+  const todayProd=movements.filter(m=>m.type==='Production'&&m.date===today()).reduce((s,m)=>s+m.qty,0);
+  const maxV=Math.max(...products.map(p=>stock[p.product_id]?(stock[p.product_id].main+stock[p.product_id].sales):0),1);
+  let html=`<div class="section-header"><h2>Inventory</h2><p>Stock driven by production, transfers and dispatches</p></div>
+  <div class="stock-flow">
+    <div class="flow-box"><div class="flow-label">🏭 Production today</div><div class="flow-val">${fmt(todayProd)}</div><div class="flow-sub">units produced</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:#378ADD"><div class="flow-label">📦 Main Warehouse (A)</div><div class="flow-val" style="color:#378ADD">${fmt(totalMain)}</div><div class="flow-sub">units in stock</div></div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-box" style="border-color:#1D9E75"><div class="flow-label">🏪 Sales Warehouse (B)</div><div class="flow-val" style="color:#1D9E75">${fmt(totalSales)}</div><div class="flow-sub">units available</div></div>
+  </div>
+  <div class="kpi-grid"><div class="kpi"><div class="kpi-label">Total all warehouses</div><div class="kpi-val">${fmt(totalMain+totalSales)}</div></div><div class="kpi"><div class="kpi-label">Low stock alerts</div><div class="kpi-val" style="color:${lowCt>0?'#A32D2D':'#111'}">${lowCt}</div></div><div class="kpi"><div class="kpi-label">Movements logged</div><div class="kpi-val">${movements.length}</div></div><div class="kpi"><div class="kpi-label">Products tracked</div><div class="kpi-val">${products.length}</div></div></div>
+  <div class="flex-gap mb16">${['stock','log','history'].map(t=>`<button class="btn-secondary${invTab===t?' btn-active':''}" onclick="invTab='${t}';renderMain()">${t==='stock'?'Stock overview':t==='log'?'Log movement':'Movement history'}</button>`).join('')}</div>`;
+  if(invTab==='stock'){
+    html+=`<div class="card"><div style="display:grid;grid-template-columns:2fr 120px 120px 200px;gap:0;padding:0 0 8px;border-bottom:1px solid #e0e0e0;font-size:10px;font-weight:700;color:#888;text-transform:uppercase;letter-spacing:.4px"><div>Product</div><div style="text-align:center">Warehouse A</div><div style="text-align:center">Warehouse B</div><div>Stock bar (A)</div></div>
+    ${products.map(p=>{const s=stock[p.product_id]||{main:0,sales:0};const pct=Math.round((s.main/maxV)*100);const low=s.main<50;return`<div style="padding:12px 0;border-bottom:1px solid #f0f0f0"><div style="display:grid;grid-template-columns:2fr 120px 120px 200px;gap:0;align-items:center"><div><div class="fw6 fs12">${p.name}</div><div class="fs11 text-muted">${p.product_id}${low?' · ⚠ Low stock in A':''}</div></div><div style="text-align:center"><strong style="color:${low?'#A32D2D':'#378ADD'}">${fmt(s.main)}</strong></div><div style="text-align:center"><strong style="color:#1D9E75">${fmt(s.sales)}</strong></div><div style="padding-right:16px"><div class="prog-wrap"><div class="prog-fill" style="width:${pct}%;background:${low?'#E24B4A':pct>60?'#1D9E75':'#378ADD'}"></div></div></div></div></div>`;}).join('')}</div>`;
+  } else if(invTab==='log'){
+    html+=`<div class="card"><h3 style="font-size:15px;font-weight:600;margin-bottom:4px">Log a movement</h3><p class="text-muted fs12 mb16">Choose the movement type then fill in the details.</p>
+    <div class="flex-gap mb16"><button class="move-type-btn${moveType==='Production'?' sel-prod':''}" onclick="moveType='Production';renderMain()">🏭 Production (→ Warehouse A)</button><button class="move-type-btn${moveType==='Transfer'?' sel-trans':''}" onclick="moveType='Transfer';renderMain()">🔄 Transfer (A → B)</button><button class="move-type-btn${moveType==='Dispatch'?' sel-disp':''}" onclick="moveType='Dispatch';renderMain()">📤 Dispatch (→ Customer)</button></div>
+    ${moveType==='Production'?`<div class="info-box"><strong>Production</strong><p>Log units produced in a shift into Warehouse A.</p></div>`:''}
+    ${moveType==='Transfer'?`<div class="info-box"><strong>Transfer A → B</strong><p>Move units from Main warehouse to Sales warehouse.</p></div>`:''}
+    ${moveType==='Dispatch'?`<div class="warning-box"><strong>Dispatch to customer</strong><p>Record units leaving Warehouse B. This reduces sales warehouse stock.</p></div>`:''}
+    <div class="${moveType==='Production'?'four-col':'three-col'}" style="margin-bottom:12px">
+      <div><label class="form-label">Date</label><input type="date" value="${moveDate}" onchange="moveDate=this.value"></div>
+      <div><label class="form-label">Product</label><select onchange="moveProdId=this.value"><option value="">Select product...</option>${DB.products.map(p=>`<option value="${p.product_id}"${moveProdId===p.product_id?' selected':''}>${p.name}</option>`).join('')}</select></div>
+      <div><label class="form-label">Quantity (units)</label><input type="number" min="1" placeholder="0" value="${moveQty}" onchange="moveQty=this.value"></div>
+      ${moveType==='Production'?`<div><label class="form-label">Shift</label><select onchange="moveShift=this.value"><option value="1"${moveShift==='1'?' selected':''}>Shift 1 (Morning)</option><option value="2"${moveShift==='2'?' selected':''}>Shift 2 (Afternoon)</option></select></div>`:''}
+    </div>
+    <div style="margin-bottom:14px"><label class="form-label">Note (optional)</label><input placeholder="e.g. Machine #3, Order ref..." value="${moveNote}" onchange="moveNote=this.value"></div>
+    <button class="btn-primary" onclick="submitMovement()">Save movement</button></div>`;
+  } else {
+    const filtered=[...DB.movements].filter(m=>!invSearch||m.product_name.toLowerCase().includes(invSearch.toLowerCase())||m.type.toLowerCase().includes(invSearch.toLowerCase()));
+    html+=`<div class="search-row"><input placeholder="Filter by product or type..." value="${invSearch}" oninput="invSearch=this.value;renderMain()" style="max-width:280px"></div>
+    <div class="card ovx"><table class="tbl"><thead><tr><th>ID</th><th>Date</th><th>Type</th><th>Product</th><th>Qty</th><th>Shift</th><th>Note</th></tr></thead><tbody>
+    ${filtered.map(m=>`<tr><td class="text-muted fs11">${m.movement_id}</td><td class="text-muted fs12">${m.date}</td><td><span class="badge badge-${m.type.toLowerCase()}">${m.type}</span></td><td class="fs12">${m.product_name}</td><td class="fw6 fs12">${fmt(m.qty)}</td><td class="text-muted fs12">${m.shift?'Shift '+m.shift:'—'}</td><td class="text-muted fs12">${m.note||'—'}</td></tr>`).join('')}
+    ${filtered.length===0?`<tr><td colspan="7" style="text-align:center;padding:24px;color:#888">No movements yet.</td></tr>`:''}
+    </tbody></table></div>`;
+  }
+  return html;
+};
+
+async function submitMovement(){
+  if(!moveProdId||!moveQty)return showToast('Select a product and enter quantity');
+  const qty=parseInt(moveQty);if(qty<=0)return showToast('Quantity must be greater than 0');
+  const prod=DB.products.find(p=>p.product_id===moveProdId);
+  const stock=calcStock();
+  if(moveType==='Transfer'&&(stock[moveProdId]||{main:0}).main<qty)return showToast('Not enough units in Warehouse A');
+  if(moveType==='Dispatch'&&(stock[moveProdId]||{sales:0}).sales<qty)return showToast('Not enough units in Warehouse B');
+  const newId=nextId('M',DB.movements,'movement_id');
+  setSyncing('syncing');
+  const{error}=await sb.from('inventory_movements').insert({movement_id:newId,date:moveDate,type:moveType,product_id:moveProdId,product_name:prod.name,qty,shift:moveType==='Production'?parseInt(moveShift):null,note:moveNote||null});
+  if(error){setSyncing('error');return showToast('Error: '+error.message);}
+  showToast(newId+' saved — stock updated');moveProdId='';moveQty='';moveNote='';
+  await loadAll();renderMain();
+}
+
+// ── EXPENSES ──────────────────────────────────────────────────────────────────
+let showExpForm=false,expForm={date:today(),category:'Raw Materials',description:'',amount:'',type:'Variable'};
+views.expenses = () => {
+  const{expenses}=DB;
+  const total=expenses.reduce((s,x)=>s+parseFloat(x.amount||0),0);
+  const byCat=EXP_CATS.map((cat,i)=>({name:cat,val:expenses.filter(x=>x.category===cat).reduce((s,x)=>s+parseFloat(x.amount||0),0),color:COLORS[i]}));
+  const byMonth=MONTHS.map((m,i)=>({month:m,amount:expenses.filter(x=>new Date(x.date).getMonth()===i).reduce((s,x)=>s+parseFloat(x.amount||0),0)}));
+  return`<div class="flex-between mb16"><div class="section-header" style="margin:0"><h2>Expenses</h2><p>${expenses.length} entries · Total: ${ETB(total)}</p></div><button class="btn-primary" onclick="showExpForm=!showExpForm;renderMain()">+ Add expense</button></div>
+  ${showExpForm?`<div class="card"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px">New expense</h3>
+  <div class="three-col" style="margin-bottom:12px"><div><label class="form-label">Date</label><input type="date" value="${expForm.date}" onchange="expForm.date=this.value"></div><div><label class="form-label">Category</label><select onchange="expForm.category=this.value">${EXP_CATS.map(c=>`<option${expForm.category===c?' selected':''}>${c}</option>`).join('')}</select></div><div><label class="form-label">Type</label><select onchange="expForm.type=this.value">${['Fixed','Variable','Controllable'].map(t=>`<option${expForm.type===t?' selected':''}>${t}</option>`).join('')}</select></div></div>
+  <div class="two-col" style="margin-bottom:14px"><div><label class="form-label">Description</label><input placeholder="e.g. Plastic resin bulk buy" value="${expForm.description}" onchange="expForm.description=this.value"></div><div><label class="form-label">Amount (ETB)</label><input type="number" placeholder="0" value="${expForm.amount}" onchange="expForm.amount=this.value"></div></div>
+  <div class="flex-gap"><button class="btn-primary" onclick="submitExpense()">Save expense</button><button class="btn-secondary" onclick="showExpForm=false;renderMain()">Cancel</button></div></div>`:''}
+  <div class="two-col"><div class="card"><span class="sec-label">By category</span>${byCat.map(c=>`<div style="margin-bottom:12px"><div class="flex-between" style="margin-bottom:5px"><span class="fs12 text-muted">${c.name}</span><strong class="fs12">${ETB(c.val)}</strong></div><div class="prog-wrap"><div class="prog-fill" style="width:${total>0?Math.round(c.val/total*100):0}%;background:${c.color}"></div></div></div>`).join('')}</div>
+  <div class="card"><span class="sec-label">Monthly totals (ETB)</span>${barChart(byMonth,'month','amount','#D85A30')}</div></div>
+  <div class="card ovx"><span class="sec-label">All entries</span><table class="tbl"><thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Type</th><th>Amount</th></tr></thead>
+  <tbody>${expenses.map(x=>`<tr><td class="text-muted fs12">${x.date}</td><td class="fs12">${x.category}</td><td class="fs12">${x.description}</td><td><span class="badge" style="background:#f0f0f0;color:#888">${x.type}</span></td><td class="fw6 fs12">${ETB(x.amount)}</td></tr>`).join('')}</tbody></table></div>`;
+};
+async function submitExpense(){
+  if(!expForm.description||!expForm.amount)return showToast('Fill in all fields');
+  const newId=nextId('EXP',DB.expenses,'expense_id');
+  setSyncing('syncing');
+  const{error}=await sb.from('expenses').insert({expense_id:newId,date:expForm.date,category:expForm.category,description:expForm.description,amount:parseFloat(expForm.amount),type:expForm.type});
+  if(error){setSyncing('error');return showToast('Error: '+error.message);}
+  expForm={date:today(),category:'Raw Materials',description:'',amount:'',type:'Variable'};showExpForm=false;
+  showToast('Expense saved!');await loadAll();renderMain();
+}
+
+// ── PRODUCTS ──────────────────────────────────────────────────────────────────
+let showProdForm=false,prodForm={id:'',name:'',price:''},prodEditId=null,prodNewPrice='';
+views.products = () => {
+  const{products}=DB;
+  return`<div class="flex-between mb16"><div class="section-header" style="margin:0"><h2>Product catalog</h2><p>${products.length} products</p></div><button class="btn-primary" onclick="showProdForm=!showProdForm;renderMain()">+ Add product</button></div>
+  ${showProdForm?`<div class="card"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px">New product</h3>
+  <div style="display:grid;grid-template-columns:1fr 2fr 1fr;gap:12px;margin-bottom:14px"><div><label class="form-label">Product ID</label><input placeholder="PC-012" oninput="prodForm.id=this.value.toUpperCase();this.value=prodForm.id"></div><div><label class="form-label">Product name</label><input placeholder="e.g. 200 Liter Container" onchange="prodForm.name=this.value"></div><div><label class="form-label">Unit price (ETB)</label><input type="number" placeholder="0" onchange="prodForm.price=this.value"></div></div>
+  <div class="flex-gap"><button class="btn-primary" onclick="submitProduct()">Add product</button><button class="btn-secondary" onclick="showProdForm=false;renderMain()">Cancel</button></div></div>`:''}
+  <div class="info-box"><strong>🔒 Price protection active</strong><p>Updating a price here only affects future orders. Every past order's unit price is stored separately in the database at the time of sale.</p></div>
+  <div class="card ovx"><table class="tbl"><thead><tr><th>#</th><th>ID</th><th>Name</th><th>Unit price (ETB)</th><th></th></tr></thead>
+  <tbody>${products.map((p,i)=>`<tr><td class="text-muted fs12">${i+1}</td><td class="fw6 color-blue fs12">${p.product_id}</td><td>${p.name}</td>
+  <td>${prodEditId===p.product_id?`<div class="flex-gap"><input type="number" value="${prodNewPrice}" style="width:110px" onchange="prodNewPrice=this.value"><button class="btn-sm" style="color:#3B6D11;border-color:#3B6D11" onclick="saveProdPrice('${p.product_id}')">Save</button><button class="btn-sm" onclick="prodEditId=null;renderMain()">×</button></div>`:`<strong>${ETB(p.price)}</strong>`}</td>
+  <td>${prodEditId!==p.product_id?`<button class="btn-sm" onclick="prodEditId='${p.product_id}';prodNewPrice=${p.price};renderMain()">Update price</button>`:''}</td></tr>`).join('')}</tbody></table></div>`;
+};
+async function submitProduct(){
+  const{id,name,price}=prodForm;
+  if(!id||!name||!price)return showToast('Fill in all fields');
+  if(DB.products.find(p=>p.product_id===id))return showToast('ID already exists');
+  setSyncing('syncing');
+  const{error}=await sb.from('products').insert({product_id:id,name,price:parseFloat(price)});
+  if(error){setSyncing('error');return showToast('Error: '+error.message);}
+  prodForm={id:'',name:'',price:''};showProdForm=false;showToast('Product added!');await loadAll();renderMain();
+}
+async function saveProdPrice(pid){
+  const p=parseFloat(prodNewPrice);if(!p||p<=0)return showToast('Invalid price');
+  setSyncing('syncing');
+  const{error}=await sb.from('products').update({price:p}).eq('product_id',pid);
+  if(error){setSyncing('error');return showToast('Error: '+error.message);}
+  prodEditId=null;showToast('Price updated — past orders unaffected');await loadAll();renderMain();
+}
+
+// ── CLIENTS ───────────────────────────────────────────────────────────────────
+let showClientForm=false,clientForm={name:'',phone:'',address:''};
+views.clients = () => {
+  const{clients,orders}=DB;
+  const stats=clients.map((c,i)=>{
+    const co=orders.filter(o=>o.client_id===c.client_id);const ac=avColors[i%avColors.length];
+    return{...c,totalOrders:co.length,totalInvoiced:co.reduce((s,o)=>s+parseFloat(o.order_total||0),0),totalPaid:co.reduce((s,o)=>s+parseFloat(o.amt_paid||0),0),balance:co.reduce((s,o)=>s+parseFloat(o.balance_due||0),0),av:initials(c.name,40,ac.bg,ac.tc)};
+  }).sort((a,b)=>b.balance-a.balance);
+  return`<div class="flex-between mb16"><div class="section-header" style="margin:0"><h2>Clients</h2><p>${clients.length} clients</p></div><button class="btn-primary" onclick="showClientForm=!showClientForm;renderMain()">+ Add client</button></div>
+  ${showClientForm?`<div class="card"><h3 style="font-size:15px;font-weight:600;margin-bottom:16px">New client</h3>
+  <div style="display:grid;grid-template-columns:1fr 1fr 2fr;gap:12px;margin-bottom:14px"><div><label class="form-label">Full name</label><input placeholder="Client name" onchange="clientForm.name=this.value"></div><div><label class="form-label">Phone</label><input placeholder="Phone number" onchange="clientForm.phone=this.value"></div><div><label class="form-label">Address</label><input placeholder="Address" onchange="clientForm.address=this.value"></div></div>
+  <div class="flex-gap"><button class="btn-primary" onclick="submitClient()">Add client</button><button class="btn-secondary" onclick="showClientForm=false;renderMain()">Cancel</button></div></div>`:''}
+  <div class="card">${stats.map(c=>`<div style="display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #f0f0f0">${c.av}<div style="flex:1;min-width:0"><div style="display:flex;align-items:center;gap:8px;margin-bottom:3px"><strong class="fs12">${c.name}</strong><span class="fs11 text-muted">${c.client_id}</span></div><div class="fs11 text-muted">${c.address||'No address'} · ${c.totalOrders} order${c.totalOrders!==1?'s':''}</div></div><div style="display:grid;grid-template-columns:repeat(3,110px);text-align:right"><div><div class="fs11 text-muted">Invoiced</div><strong class="fs12">${ETB(c.totalInvoiced)}</strong></div><div><div class="fs11 text-muted">Paid</div><strong class="fs12 color-green">${ETB(c.totalPaid)}</strong></div><div><div class="fs11 text-muted">Balance</div><strong class="fs12" style="color:${c.balance>0?'#A32D2D':'#3B6D11'}">${ETB(c.balance)}</strong></div></div>${c.balance>0?badge(c.balance===c.totalInvoiced?'Unpaid':'Partial'):c.totalOrders>0?badge('Paid'):''}</div>`).join('')}</div>`;
+};
+async function submitClient(){
+  if(!clientForm.name)return showToast('Enter a name');
+  const newId=nextId('C',DB.clients,'client_id');
+  setSyncing('syncing');
+  const{error}=await sb.from('clients').insert({client_id:newId,...clientForm});
+  if(error){setSyncing('error');return showToast('Error: '+error.message);}
+  clientForm={name:'',phone:'',address:''};showClientForm=false;showToast('Client '+newId+' added!');await loadAll();renderMain();
+}
+
+// ── SALES REPORT ──────────────────────────────────────────────────────────────
+let reportMode='monthly',reportMetric='units';
+views['sales report'] = () => {
+  const{orders,orderLines,products}=DB;
+  const isRev=reportMetric==='revenue',isQtr=reportMode==='quarterly';
+  const colLabels=isQtr?['Q1','Q2','Q3','Q4']:MONTHS;
+  function getVals(pid){
+    return colLabels.map((_,i)=>{
+      const periodOrders=isQtr?orders.filter(o=>Math.floor(new Date(o.date).getMonth()/3)===i):orders.filter(o=>new Date(o.date).getMonth()===i);
+      return periodOrders.reduce((s,o)=>{const lines=orderLines.filter(l=>l.order_id===o.order_id&&l.product_id===pid);return s+lines.reduce((a,l)=>a+(isRev?parseFloat(l.line_total||0):parseInt(l.qty||0)),0);},0);
+    });
+  }
+  const rows=products.map(p=>{const vals=getVals(p.product_id);const rowTotal=vals.reduce((s,v)=>s+v,0);return{...p,vals,rowTotal};}).filter(r=>r.rowTotal>0);
+  const colTotals=colLabels.map((_,i)=>rows.reduce((s,r)=>s+r.vals[i],0));
+  const grandTotal=colTotals.reduce((s,v)=>s+v,0);
+  const chartData=colLabels.map((l,i)=>({label:l,val:colTotals[i]}));
+  const topProdData=rows.sort((a,b)=>b.rowTotal-a.rowTotal).slice(0,6).map(r=>({name:r.name.replace(' Container','').replace('Liter ','L '),val:r.rowTotal}));
+  return`<div class="flex-between mb16">
+    <div class="section-header" style="margin:0"><h2>Sales Report</h2><p>Product-level breakdown by month and quarter</p></div>
+    <div class="flex-gap no-print"><button class="btn-green" onclick="downloadCSV()">⬇ Download CSV</button><button class="btn-secondary" onclick="window.print()">🖨 Print / Save PDF</button></div>
+  </div>
+  <div class="flex-gap mb16 no-print">
+    <div class="flex-gap"><span class="text-muted fs12">Period:</span>${['monthly','quarterly'].map(m=>`<button class="btn-secondary${reportMode===m?' btn-active':''}" onclick="reportMode='${m}';renderMain()">${m.charAt(0).toUpperCase()+m.slice(1)}</button>`).join('')}</div>
+    <div style="width:1px;height:20px;background:#e0e0e0"></div>
+    <div class="flex-gap"><span class="text-muted fs12">Metric:</span>${['units','revenue'].map(m=>`<button class="btn-secondary${reportMetric===m?' btn-active':''}" onclick="reportMetric='${m}';renderMain()">${m.charAt(0).toUpperCase()+m.slice(1)}</button>`).join('')}</div>
+  </div>
+  <div class="two-col">
+    <div class="card"><span class="sec-label">${isQtr?'Quarterly':'Monthly'} ${isRev?'revenue (ETB)':'units sold'}</span>${barChart(chartData,'label','val','#378ADD',150)}</div>
+    <div class="card"><span class="sec-label">Top products — ${isRev?'revenue':'units'}</span>${topProdData.length?hBarChart(topProdData,'name','val',150):'<p class="text-muted fs12" style="padding:16px 0">No data yet.</p>'}</div>
+  </div>
+  <div class="card ovx">
+    <div class="flex-between mb16"><span class="sec-label" style="margin:0">${isQtr?'Quarterly':'Monthly'} ${isRev?'revenue':'units sold'} — all products</span><span class="text-muted fs11">${rows.length} active products · Grand total: <strong>${isRev?ETB(grandTotal):fmt(grandTotal)+' units'}</strong></span></div>
+    <table class="report-tbl"><thead><tr><th style="text-align:left;min-width:140px">Product</th>${colLabels.map(l=>`<th>${l}</th>`).join('')}<th>Total</th></tr></thead>
+    <tbody>${rows.map(r=>`<tr><td>${r.name}</td>${r.vals.map(v=>`<td>${isRev?ETB(v):fmt(v)}</td>`).join('')}<td style="font-weight:700;color:#378ADD">${isRev?ETB(r.rowTotal):fmt(r.rowTotal)}</td></tr>`).join('')}<tr class="total-row"><td>TOTAL</td>${colTotals.map(v=>`<td>${isRev?ETB(v):fmt(v)}</td>`).join('')}<td>${isRev?ETB(grandTotal):fmt(grandTotal)}</td></tr></tbody></table>
+  </div>`;
+};
+function downloadCSV(){
+  const{orders,orderLines,products}=DB;
+  const isRev=reportMetric==='revenue',isQtr=reportMode==='quarterly';
+  const cols=isQtr?['Q1','Q2','Q3','Q4']:MONTHS;
+  let csv='Product,'+cols.join(',')+',Total\n';
+  products.forEach(p=>{
+    const vals=cols.map((_,i)=>{const po=isQtr?orders.filter(o=>Math.floor(new Date(o.date).getMonth()/3)===i):orders.filter(o=>new Date(o.date).getMonth()===i);return po.reduce((s,o)=>{const lines=orderLines.filter(l=>l.order_id===o.order_id&&l.product_id===p.product_id);return s+lines.reduce((a,l)=>a+(isRev?parseFloat(l.line_total||0):parseInt(l.qty||0)),0);},0);});
+    const total=vals.reduce((s,v)=>s+v,0);
+    if(total>0)csv+=`"${p.name}",${vals.join(',')},${total}\n`;
+  });
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
+  a.download=`gulele_sales_${reportMode}_${reportMetric}_${today()}.csv`;a.click();
+  showToast('CSV downloaded!');
+}
+
+// ── AI PANEL ──────────────────────────────────────────────────────────────────
+let aiMessages=[{role:'assistant',content:"Hi Nathan! I'm connected to your live Supabase database and can see all your current data — sales, inventory, expenses, and clients. What would you like to know?"}];
+let aiInput='',aiLoading=false;
+function renderAI(){
+  const panel=document.getElementById('ai-panel');
+  if(!panel||panel.style.display==='none')return;
+  panel.innerHTML=`<div style="padding:12px 16px;border-bottom:1px solid #e0e0e0;display:flex;justify-content:space-between;align-items:center"><div><strong style="font-size:13px">✦ AI Assistant</strong><div style="font-size:10px;color:#888">Claude · Live Supabase data</div></div><button onclick="toggleAI()" style="background:none;border:none;font-size:20px;color:#888;cursor:pointer;line-height:1">×</button></div>
+  <div class="chat-messages" id="chat-messages">${aiMessages.map(m=>`<div style="display:flex;justify-content:${m.role==='user'?'flex-end':'flex-start'}"><div class="chat-bubble ${m.role==='user'?'chat-user':'chat-bot'}">${m.content.replace(/\n/g,'<br>')}</div></div>`).join('')}${aiLoading?`<div style="display:flex"><div class="chat-bubble chat-bot">Thinking...</div></div>`:''}</div>
+  <div class="chat-input-row"><input style="flex:1" placeholder="Ask about your business..." value="${aiInput}" onkeydown="if(event.key==='Enter')sendAI()" oninput="aiInput=this.value" id="ai-input"><button class="btn-primary" style="padding:8px 14px" onclick="sendAI()">→</button></div>`;
+  const msgs=document.getElementById('chat-messages');if(msgs)msgs.scrollTop=msgs.scrollHeight;
+}
+function buildAIContext(){
+  const{orders,expenses,movements,products,clients}=DB;const stock=calcStock();
+  const rev=orders.reduce((s,o)=>s+parseFloat(o.order_total||0),0);
+  const out=orders.reduce((s,o)=>s+parseFloat(o.balance_due||0),0);
+  const exp=expenses.reduce((s,x)=>s+parseFloat(x.amount||0),0);
+  const pr={};DB.orderLines.forEach(l=>{pr[l.product_name]=(pr[l.product_name]||0)+parseFloat(l.line_total||0);});
+  const top=Object.entries(pr).sort((a,b)=>b[1]-a[1]).slice(0,3).map(([n,r])=>n+': ETB '+Math.round(r).toLocaleString()).join(', ');
+  const bals=clients.map(c=>{const b=orders.filter(o=>o.client_id===c.client_id).reduce((s,o)=>s+parseFloat(o.balance_due||0),0);return b>0?c.name+': ETB '+Math.round(b).toLocaleString()+' owed':null;}).filter(Boolean).join('; ');
+  const low=products.filter(p=>stock[p.product_id]&&stock[p.product_id].main<50).map(p=>p.name).join(', ');
+  return`You are the AI assistant for Gulele Factory, a plastic container manufacturer in Ethiopia. Owner: Nathan. All amounts in ETB. Data is live from Supabase.\nRevenue: ETB ${Math.round(rev).toLocaleString()}, Outstanding: ETB ${Math.round(out).toLocaleString()}, Expenses: ETB ${Math.round(exp).toLocaleString()}.\nTop products: ${top||'none yet'}. Client balances: ${bals||'none'}. Low stock (Warehouse A < 50): ${low||'none'}.\nBe concise and actionable.`;
+}
+async function sendAI(){
+  const el=document.getElementById('ai-input');const text=(el?el.value:aiInput).trim();
+  if(!text||aiLoading)return;
+  aiInput='';aiMessages.push({role:'user',content:text});aiLoading=true;renderAI();
+  try{
+    const res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,system:buildAIContext(),messages:aiMessages.map(m=>({role:m.role,content:m.content}))})});
+    const d=await res.json();aiMessages.push({role:'assistant',content:d.content?.[0]?.text||'No response.'});
+  }catch{aiMessages.push({role:'assistant',content:'Connection error.'});}
+  aiLoading=false;renderAI();
+}
+function toggleAI(){
+  const p=document.getElementById('ai-panel');const btn=document.getElementById('ai-toggle');
+  if(p.style.display==='none'){p.style.display='flex';p.style.flexDirection='column';btn.style.color='#378ADD';btn.style.borderColor='#378ADD';renderAI();}
+  else{p.style.display='none';btn.style.color='';btn.style.borderColor='';}
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+async function bootApp(){
+  renderNav();
+  document.getElementById('main').innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:200px;color:#888;font-size:14px">Loading data from Supabase…</div>';
+  await loadAll();
+  renderMain();
+}
+
+// Auto-boot if session already active (handles page refresh)
+if(sessionStorage.getItem('gf_auth') === '1'){
+  bootApp();
+}
+</script>
+</body>
+</html>
